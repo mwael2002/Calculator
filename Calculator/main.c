@@ -7,6 +7,17 @@
 #include"STD_Types.h"
 #include"LCD_interface.h"
 #include"Keypad_interface.h"
+
+#define one_digit                 0
+#define more_than_one_digit       1
+
+#define Addition                  11
+#define Subtraction               12
+#define Multiplication            13
+#define Division                  14
+#define Final_Result              15
+#define Restart                   16
+
 S16 multiple_digits(S16 nu);
 void take_no_from_user(void);
 void Add(void);
@@ -16,10 +27,9 @@ void Divide(void);
 void Equal(void);
 void Reset(void);
 
-U8 counter=0;
-S32 dig;
-U8 symbol;
-U8 x_pos_counter =0;
+U8 digit_no_flag=one_digit;
+U8 operation;
+U8 x_pos_counter=0;
 U8 flag=10;
 S32 no;
 S32 equal=0;
@@ -45,46 +55,55 @@ void main(void){
 		}
 }
 S16 multiple_digits(S16 nu){
-    if(counter==0){
-    	dig=nu;
+
+	static S32 no_with_digit;
+
+    if(digit_no_flag==one_digit){
+    	no_with_digit=nu;
     	return nu;
     }
     else{
-             nu=(dig*10+nu);
-             dig=nu;
+             nu=(no_with_digit*10+nu);
+             no_with_digit=nu;
              return nu;
     	}
     }
 
 void take_no_from_user(void){
 	/***********Takes no from user****************/
-	counter=0;
-	S16 y;
+	digit_no_flag=one_digit;
+	S16 temp_no;
 	while(1){
 		if(x_pos_counter==16){
 			x_pos_counter--;
 		}
-		y=no;
+
+		temp_no=no;
+
 		do{
 			no=KPD_status();
 		} while(no==255);
-		symbol=no;
+
+		operation=no;
+
 		if(no<10){
 			LCD_write_no_pos(no,0,x_pos_counter);
 			x_pos_counter++;
 			no=multiple_digits(no);
-			counter=1;
+			digit_no_flag=more_than_one_digit;
 	}
-		else if(symbol>10){
-			no=y;
+
+		else if(operation>10){
+			no=temp_no;
 			break;
 		}
 	}
 	/*************************************************/
 }
+
 void Add(void){
 	/**************Addition**************************/
-		if(symbol==11){
+		if(operation==Addition){
 			if(flag==1){
 				equal=equal-no;
 				LCD_write_string_pos("+",0,x_pos_counter);
@@ -131,7 +150,7 @@ void Add(void){
 
 void Subtract(void){
 	/**********************Subtraction**********************/
-   if(symbol==12){
+   if(operation==Subtraction){
 		if(flag==10){
 		   LCD_write_string_pos("-",0,x_pos_counter);
 		   x_pos_counter++;
@@ -183,7 +202,7 @@ void Subtract(void){
 
 void Multiply(void){
 	/*****************Multiplication*********************/
-if(symbol==13){
+if(operation==Multiplication){
 	 if(flag==1){
 		 product=product*no;
 		LCD_write_string_pos("x",0,x_pos_counter);
@@ -216,7 +235,7 @@ if(symbol==13){
 
 void Divide(void){
 	/******************Division***********************/
-if(symbol==14){
+if(operation==Division){
     if(((flag==10) || (flag==0))&&(flag!=1)){
     	division=no;
     	LCD_write_string_pos("/",0,x_pos_counter);
@@ -257,7 +276,7 @@ if(symbol==14){
 
 void Equal(void){
 	/******************Equal********************/
-if(symbol==15){
+if(operation==Final_Result){
 		if(flag==0){
 			equal+=no;}
 		else if(flag==1){
@@ -277,6 +296,7 @@ if(symbol==15){
 		else if(flag==10){
 			equal=no;
 		}
+
 		LCD_write_string_pos("=",0,x_pos_counter);
 	    x_pos_counter++;
 	    if(x_pos_counter==16){
@@ -289,8 +309,8 @@ if(symbol==15){
 }
 
 void Reset(void){
-	/****************Restart**************************/
-if(symbol==16){
+	/****************Reset**************************/
+if(operation==Restart){
 		      LCD_init();
 		      x_pos_counter =0;
 			 flag=10;
