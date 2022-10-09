@@ -94,7 +94,7 @@ void take_no_from_user(void){
 
 		do{
 			no=KPD_status();
-		} while(no==255);
+		} while(no==No_pressed_key);
 
 		operation=no;
 
